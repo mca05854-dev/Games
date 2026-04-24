@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Game Hub</title>
+  <style>
+    body {
+      background: black;
+      color: white;
+      font-family: Arial;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    input {
+      padding: 10px;
+      width: 60%;
+      font-size: 16px;
+      margin: 20px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    .btn {
+      display: block;
+      margin: 10px auto;
+      padding: 12px;
+      width: 60%;
+      border: 2px solid white;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      background: white;
+      color: black;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎮 My Game Hub</h1>
+
+<input id="search" placeholder="Search games...">
+
+<div id="games"></div>
+
+<script>
+const user = "mca05854-dev";
+const repo = "Games";
+const apiURL = `https://api.github.com/repos/${user}/${repo}/contents`;
+
+let allFiles = [];
+
+// Fetch repo files from GitHub API
+async function loadFiles(path = "") {
+  const res = await fetch(apiURL + path);
+  const data = await res.json();
+
+  for (let item of data) {
+    if (item.type === "file" && item.name.endsWith(".html")) {
+      allFiles.push(item);
+    }
+    if (item.type === "dir") {
+      await loadFiles("/" + item.path);
+    }
+  }
+
+  render(allFiles);
+}
+
+// Create buttons
+function render(files) {
+  const container = document.getElementById("games");
+  container.innerHTML = "";
+
+  files.forEach(file => {
+    const btn = document.createElement("a");
+    btn.className = "btn";
+    btn.textContent = file.name;
+    btn.href = file.path;
+    container.appendChild(btn);
+  });
+}
+
+// Search filter
+document.getElementById("search").addEventListener("input", (e) => {
+  const val = e.target.value.toLowerCase();
+  const filtered = allFiles.filter(f =>
+    f.name.toLowerCase().includes(val)
+  );
+  render(filtered);
+});
+
+loadFiles();
+</script>
+
+</body>
+</html>

@@ -64,9 +64,13 @@ async function loadFiles(path = "") {
   const data = await res.json();
 
   for (let item of data) {
-    if (item.type === "file" && item.name.endsWith(".html")) {
+    if (item.type === "file" && (
+        item.name.endsWith(".html") || 
+        item.name.endsWith(".js")
+    )) {
       allFiles.push(item);
     }
+
     if (item.type === "dir") {
       await loadFiles("/" + item.path);
     }

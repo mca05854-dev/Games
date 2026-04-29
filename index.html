@@ -1,109 +1,67 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Game Hub</title>
-  <style>
-    body {
-      background: black;
-      color: white;
-      font-family: Arial;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-    }
-
-    h1 {
-      margin-top: 20px;
-    }
-
-    input {
-      padding: 10px;
-      width: 60%;
-      font-size: 16px;
-      margin: 20px;
-      border-radius: 8px;
-      border: none;
-    }
-
-    .btn {
-      display: block;
-      margin: 10px auto;
-      padding: 12px;
-      width: 60%;
-      border: 2px solid white;
-      color: white;
-      text-decoration: none;
-      border-radius: 10px;
-      transition: 0.2s;
-    }
-
-    .btn:hover {
-      background: white;
-      color: black;
-    }
-  </style>
-</head>
-<body>
-
-<h1>🎮 My Game Hub</h1>
-
-<input id="search" placeholder="Search games...">
-
-<div id="games"></div>
-
 <script>
 const user = "mca05854-dev";
 const repo = "Games";
 const apiURL = `https://api.github.com/repos/${user}/${repo}/contents`;
 
-let allFiles = [];
+let games = {};
 
-// Fetch repo files from GitHub API
-async function loadFiles(path = "") {
+// Recursively scan repo
+async function scan(path = "") {
   const res = await fetch(apiURL + path);
   const data = await res.json();
 
   for (let item of data) {
-    if (item.type === "file" && (
-        item.name.endsWith(".html") || 
-        item.name.endsWith(".js")
-    )) {
-      allFiles.push(item);
+    if (item.type === "dir") {
+      await scan("/" + item.path);
     }
 
-    if (item.type === "dir") {
-      await loadFiles("/" + item.path);
+    if (item.type === "file") {
+      const parts = item.path.split("/");
+
+      const fileName = parts.pop();
+      const folder = parts.join("/");
+
+      // Only care about index.html files
+      if (fileName === "index.html") {
+        games[folder] = item.path;
+      }
     }
   }
 
-  render(allFiles);
+  render();
 }
 
-// Create buttons
-function render(files) {
+// Render game buttons
+function render(filter = "") {
   const container = document.getElementById("games");
   container.innerHTML = "";
 
-  files.forEach(file => {
+  Object.entries(games).forEach(([name, path]) => {
+    if (!name.toLowerCase().includes(filter.toLowerCase())) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "btn";
+
+    const title = document.createElement("div");
+    title.textContent = name || "Root Game";
+
     const btn = document.createElement("a");
-    btn.className = "btn";
-    btn.textContent = file.name;
-    btn.href = file.path;
-    container.appendChild(btn);
+    btn.textContent = "▶ Play";
+    btn.href = path;
+    btn.style.display = "block";
+    btn.style.marginTop = "8px";
+    btn.style.color = "lime";
+
+    wrapper.appendChild(title);
+    wrapper.appendChild(btn);
+    container.appendChild(wrapper);
   });
 }
 
-// Search filter
+// Search
 document.getElementById("search").addEventListener("input", (e) => {
-  const val = e.target.value.toLowerCase();
-  const filtered = allFiles.filter(f =>
-    f.name.toLowerCase().includes(val)
-  );
-  render(filtered);
+  render(e.target.value);
 });
 
-loadFiles();
+scan();
 </script>
-
-</body>
-</html>

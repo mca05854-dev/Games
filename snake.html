@@ -1,0 +1,46 @@
+<html lang="en">
+<head>
+<!-- RUFFLED RESOURCE-->
+		
+	<title>Snake</title>
+	<meta name="description" content="Direct the ever growing snake around the garden in seach of flowers.">
+
+	<meta charset="UTF-8">
+	<meta name="author" content="Dr Iestyn B Jones, eChalk Ltd">
+	<meta name="copyright" content="eChalk Ltd - www.echalk.co.uk">
+	<meta name="robots" content="All">
+
+	<link href="/css/HTML5/HTML5Resource_2020.css" rel="stylesheet" type="text/css">
+	<script src="/JavaScript/GoogleAnalytics/snippet.js"></script>
+  
+</head>
+
+<body>
+	<div id="swfContainer"></div>
+	<script>
+	  window.RufflePlayer = window.RufflePlayer || {};
+	  window.addEventListener("load", (event) => {
+		  const ruffle = window.RufflePlayer.newest();
+		  const player = ruffle.createPlayer();
+		  const container = document.getElementById("swfContainer");
+		  container.appendChild(player);
+		  player.config = {
+			autoplay: "on",  //on is default
+			unmuteOverlay:"hidden",
+			contextMenu: false
+		  };
+		  player.style.width = "100%"; player.style.height = "100%";
+		  player.load("snake.swf");
+		  
+	  });
+   </script>
+   <script src="/JavaScript/ruffle/ruffle.js"></script>
+	  <!-- Ruffle CDN
+	  <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+	  -->
+	  <!-- LOCAL RUFFLE FILES
+	  <script src="/JavaScript/ruffle/ruffle.js"></script>
+	  -->
+  
+</body>
+</html>

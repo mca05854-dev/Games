@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rocket Simulator - Orbit Update</title>
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: black;
+    font-family: Arial;
+    color: white;
+}
+
+#ui {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 8px;
+    z-index: 10;
+}
+
+#orbitMsg {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.7);
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-size: 18px;
+    display: none;
+    z-index: 20;
+}
+
+canvas { display:block; }
+</style>
+</head>
+<body>
+
+<div id="ui">
+<div>Fuel: <span id="fuel">100</span>%</div>
+<div>Speed: <span id="speed">0</span></div>
+<div>Distance: <span id="dist">0</span> km</div>
+<div id="status">Flying</div>
+<p>Arrows: move | R: reset | M: moon mode</p>
+</div>
+
+<div id="orbitMsg">🌍 Escaped Earth’s orbit</div>
+
+<canvas id="c"></canvas>
+
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+let keys = {};
+addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+let gravity = 0.03;
+let spaceGravity = 0.004; // 👈 low gravity in space
+
+let camera = { x: 0, y: 0 };
+let moonMode = false;
+
+let orbitEscaped = false;
+let orbitMsgTimer = 0;
+
+const rocket = {
+    x: 0,
+    y: 100,
+    vx: 0,
+    vy: 0,
+    angle: 0,
+    fuel: 100,
+    crashed:false,
+    landed:false,
+    dist:0
+};
+
+function beep(freq){
+    let ctxAudio = new (window.AudioContext || window.webkitAudioContext)();
+    let osc = ctxAudio.createOscillator();
+    let gain = ctxAudio.createGain();
+    osc.connect(gain);
+    gain.connect(ctxAudio.destination);
+    osc.frequency.value = freq;
+    osc.start();
+    gain.gain.setValueAtTime(0.2, ctxAudio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctxAudio.currentTime+0.2);
+    osc.stop(ctxAudio.currentTime+0.2);
+}
+
+function showOrbitMessage(){
+    let msg = document.getElementById("orbitMsg");
+    msg.style.display = "block";
+
+    orbitMsgTimer = 300; // ~5 seconds at 60fps
+}
+
+function update(){
+    if(keys["r"]) location.reload();
+
+    if(keys["arrowleft"]) rocket.angle -= 0.05;
+    if(keys["arrowright"]) rocket.angle += 0.05;
+
+    let thrust = keys["arrowup"] && rocket.fuel > 0;
+
+    if(thrust){
+        rocket.vx += Math.sin(rocket.angle)*0.08;
+        rocket.vy -= Math.cos(rocket.angle)*0.08;
+        rocket.fuel -= 0.3;
+    }
+
+    // 🌍 ORBIT ESCAPE CHECK
+    if(!orbitEscaped && rocket.y < -1200){
+        orbitEscaped = true;
+        showOrbitMessage();
+        beep(800);
+    }
+
+    // 🪐 gravity changes in space
+    let g = orbitEscaped ? spaceGravity : gravity;
+    rocket.vy += g;
+
+    rocket.x += rocket.vx;
+    rocket.y += rocket.vy;
+
+    rocket.dist += Math.abs(rocket.vy)*0.02;
+
+    // UI update
+    document.getElementById("fuel").innerText = Math.floor(rocket.fuel);
+    document.getElementById("speed").innerText = Math.floor(Math.hypot(rocket.vx,rocket.vy));
+    document.getElementById("dist").innerText = Math.floor(rocket.dist);
+
+    // camera follow
+    camera.x += (rocket.x - camera.x)*0.08;
+    camera.y += (rocket.y - camera.y)*0.08;
+
+    // message timer
+    if(orbitMsgTimer > 0){
+        orbitMsgTimer--;
+        if(orbitMsgTimer === 0){
+            document.getElementById("orbitMsg").style.display = "none";
+        }
+    }
+}
+
+function drawRocket(){
+    ctx.save();
+    ctx.translate(rocket.x - camera.x + canvas.width/2,
+                  rocket.y - camera.y + canvas.height/2);
+    ctx.rotate(rocket.angle);
+
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.moveTo(0,-20);
+    ctx.lineTo(10,20);
+    ctx.lineTo(-10,20);
+    ctx.closePath();
+    ctx.fill();
+
+    // 🔥 thrust flame
+    if(keys["arrowup"] && rocket.fuel > 0){
+        ctx.fillStyle = "orange";
+        ctx.beginPath();
+        ctx.moveTo(-5,20);
+        ctx.lineTo(5,20);
+        ctx.lineTo(0,40+Math.random()*10);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    ctx.restore();
+}
+
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // stars in space effect
+    if(orbitEscaped){
+        ctx.fillStyle = "white";
+        for(let i=0;i<60;i++){
+            ctx.fillRect(Math.random()*canvas.width,
+                         Math.random()*canvas.height,
+                         1,1);
+        }
+    }
+
+    drawRocket();
+}
+
+function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>

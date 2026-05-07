@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>PAC-MAN's 30th Birthday!</title>
+
+<style>
+html {
+    touch-action: none;
+}
+
+body {
+    background: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    overflow: hidden;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#hplogo {
+    background: black url("./logos/pacman10-hp.2.png") 0 0 no-repeat;
+    width: 484px;
+    height: 208px;
+    position: relative;
+
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+#hplogo-c {
+    outline: none;
+}
+
+.close-btn {
+    background: url("./logos/pacman10-hp-sprite-3.png") -216px -105px no-repeat;
+
+    position: absolute;
+    right: 0;
+    top: 0;
+
+    width: 12px;
+    height: 12px;
+
+    border: 10px solid black;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="lga">
+    <div id="hplogo">
+
+        <canvas
+            id="hplogo-c"
+            width="484"
+            height="208"
+            tabindex="0">
+        </canvas>
+
+        <div class="close-btn"></div>
+
+    </div>
+</div>
+
+<script>
+// Placeholder JS so the page loads without errors
+
+const canvas = document.getElementById("hplogo-c");
+const ctx = canvas.getContext("2d");
+
+ctx.fillStyle = "yellow";
+ctx.beginPath();
+ctx.arc(100, 100, 40, 0.25 * Math.PI, 1.75 * Math.PI);
+ctx.lineTo(100, 100);
+ctx.fill();
+
+ctx.fillStyle = "white";
+ctx.font = "20px Arial";
+ctx.fillText("PAC-MAN DEMO", 160, 110);
+</script>
+
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Game Hub</title>
+<title>Auto Game Hub</title>
 <style>
 body {
     margin: 0;
@@ -12,94 +12,126 @@ body {
 }
 
 #top {
-    padding: 15px;
+    padding: 12px;
     background: #222;
     display: flex;
-    gap: 10px;
     align-items: center;
-}
-
-button {
-    padding: 10px;
-    background: #444;
-    color: white;
-    border: none;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #666;
+    gap: 10px;
 }
 
 #games {
-    padding: 20px;
+    padding: 15px;
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
 }
 
-.game-btn {
+.game {
     padding: 10px 15px;
     background: #2a7fff;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
+}
+
+.game:hover {
+    background: #4a90ff;
 }
 
 iframe {
     width: 100%;
     height: 85vh;
     border: none;
+    display: none;
+}
+
+#status {
+    margin-left: auto;
+    font-size: 14px;
+    opacity: 0.7;
 }
 </style>
 </head>
 <body>
 
 <div id="top">
-    <h3>🎮 Game Hub</h3>
-    <input id="name" placeholder="Game name">
-    <input id="file" placeholder="file.html (must be in repo)">
-    <button onclick="addGame()">Add Game</button>
-    <button onclick="closeGame()">Close Game</button>
+    🎮 Auto Game Hub
+    <div id="status">Scanning repo...</div>
 </div>
 
 <div id="games"></div>
 
-<iframe id="screen" style="display:none;"></iframe>
+<iframe id="frame"></iframe>
 
 <script>
-const games = [];
+let owner, repo;
 
-function addGame(){
-    const name = document.getElementById("name").value;
-    const file = document.getElementById("file").value;
+// 🔥 Detect GitHub Pages repo automatically
+(function detectRepo(){
+    const parts = window.location.hostname.split(".");
+    owner = parts[0]; // username.github.io
 
-    if(!name || !file) return;
+    const pathParts = window.location.pathname.split("/").filter(Boolean);
+    repo = pathParts[0] || owner + ".github.io";
 
-    games.push({name, file});
-    render();
+    if(repo === owner + ".github.io"){
+        repo = owner + ".github.io";
+    }
+
+    scanRepo();
+})();
+
+async function scanRepo(){
+    const status = document.getElementById("status");
+
+    try {
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if(!Array.isArray(data)){
+            status.innerText = "❌ Cannot scan repo (private or error)";
+            return;
+        }
+
+        const games = data.filter(file =>
+            file.name.endsWith(".html") &&
+            file.name !== "index.html"
+        );
+
+        if(games.length === 0){
+            status.innerText = "No HTML games found";
+            return;
+        }
+
+        status.innerText = `Found ${games.length} games`;
+
+        renderGames(games);
+
+    } catch (err) {
+        status.innerText = "Error scanning repo";
+        console.error(err);
+    }
 }
 
-function render(){
+function renderGames(files){
     const container = document.getElementById("games");
+    const frame = document.getElementById("frame");
+
     container.innerHTML = "";
 
-    games.forEach(g=>{
-        const btn = document.createElement("div");
-        btn.className = "game-btn";
-        btn.innerText = g.name;
+    files.forEach(file => {
+        const div = document.createElement("div");
+        div.className = "game";
+        div.innerText = file.name;
 
-        btn.onclick = () => {
-            document.getElementById("screen").style.display = "block";
-            document.getElementById("screen").src = g.file;
+        div.onclick = () => {
+            frame.style.display = "block";
+            frame.src = file.path;
         };
 
-        container.appendChild(btn);
+        container.appendChild(div);
     });
-}
-
-function closeGame(){
-    document.getElementById("screen").style.display = "none";
-    document.getElementById("screen").src = "";
 }
 </script>
 

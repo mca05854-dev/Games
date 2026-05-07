@@ -1,104 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Game Hub</title>
-  <style>
-    body {
-      background: black;
-      color: white;
-      font-family: Arial;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-    }
+<meta charset="UTF-8">
+<title>Game Hub</title>
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #111;
+    color: white;
+}
 
-    h1 {
-      margin-top: 20px;
-    }
+#top {
+    padding: 15px;
+    background: #222;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
 
-    input {
-      padding: 10px;
-      width: 60%;
-      font-size: 16px;
-      margin: 20px;
-      border-radius: 8px;
-      border: none;
-    }
+button {
+    padding: 10px;
+    background: #444;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
 
-    .btn {
-      display: block;
-      margin: 10px auto;
-      padding: 12px;
-      width: 60%;
-      border: 2px solid white;
-      color: white;
-      text-decoration: none;
-      border-radius: 10px;
-      transition: 0.2s;
-    }
+button:hover {
+    background: #666;
+}
 
-    .btn:hover {
-      background: white;
-      color: black;
-    }
-  </style>
+#games {
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.game-btn {
+    padding: 10px 15px;
+    background: #2a7fff;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+iframe {
+    width: 100%;
+    height: 85vh;
+    border: none;
+}
+</style>
 </head>
 <body>
 
-<h1>🎮 My Game Hub</h1>
-
-<input id="search" placeholder="Search games...">
+<div id="top">
+    <h3>🎮 Game Hub</h3>
+    <input id="name" placeholder="Game name">
+    <input id="file" placeholder="file.html (must be in repo)">
+    <button onclick="addGame()">Add Game</button>
+    <button onclick="closeGame()">Close Game</button>
+</div>
 
 <div id="games"></div>
 
+<iframe id="screen" style="display:none;"></iframe>
+
 <script>
-const user = "mca05854-dev";
-const repo = "Games";
-const apiURL = `https://api.github.com/repos/${user}/${repo}/contents`;
+const games = [];
 
-let allFiles = [];
+function addGame(){
+    const name = document.getElementById("name").value;
+    const file = document.getElementById("file").value;
 
-// Fetch repo files from GitHub API
-async function loadFiles(path = "") {
-  const res = await fetch(apiURL + path);
-  const data = await res.json();
+    if(!name || !file) return;
 
-  for (let item of data) {
-    if (item.type === "file" && item.name.endsWith(".html")) {
-      allFiles.push(item);
-    }
-    if (item.type === "dir") {
-      await loadFiles("/" + item.path);
-    }
-  }
-
-  render(allFiles);
+    games.push({name, file});
+    render();
 }
 
-// Create buttons
-function render(files) {
-  const container = document.getElementById("games");
-  container.innerHTML = "";
+function render(){
+    const container = document.getElementById("games");
+    container.innerHTML = "";
 
-  files.forEach(file => {
-    const btn = document.createElement("a");
-    btn.className = "btn";
-    btn.textContent = file.name;
-    btn.href = file.path;
-    container.appendChild(btn);
-  });
+    games.forEach(g=>{
+        const btn = document.createElement("div");
+        btn.className = "game-btn";
+        btn.innerText = g.name;
+
+        btn.onclick = () => {
+            document.getElementById("screen").style.display = "block";
+            document.getElementById("screen").src = g.file;
+        };
+
+        container.appendChild(btn);
+    });
 }
 
-// Search filter
-document.getElementById("search").addEventListener("input", (e) => {
-  const val = e.target.value.toLowerCase();
-  const filtered = allFiles.filter(f =>
-    f.name.toLowerCase().includes(val)
-  );
-  render(filtered);
-});
-
-loadFiles();
+function closeGame(){
+    document.getElementById("screen").style.display = "none";
+    document.getElementById("screen").src = "";
+}
 </script>
 
 </body>

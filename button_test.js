@@ -1,9 +1,2 @@
-const button = document.createElement("button");
-
-button.textContent = "Click Me";
-
-button.addEventListener("click", () => {
-  alert("Hello!");
-});
-
-document.body.appendChild(button);
+// the hello world program
+console.log('Hello World');

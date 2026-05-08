@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Auto Game Hub</title>
+
 <style>
 body {
     margin: 0;
@@ -17,6 +18,17 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+#fullscreenHint {
+    background: #333;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    opacity: 0.9;
 }
 
 #games {
@@ -31,10 +43,12 @@ body {
     background: #2a7fff;
     border-radius: 8px;
     cursor: pointer;
+    transition: 0.2s;
 }
 
 .game:hover {
     background: #4a90ff;
+    transform: scale(1.05);
 }
 
 iframe {
@@ -42,6 +56,7 @@ iframe {
     height: 85vh;
     border: none;
     display: none;
+    background: black;
 }
 
 #status {
@@ -51,10 +66,16 @@ iframe {
 }
 </style>
 </head>
+
 <body>
 
 <div id="top">
     🎮 Auto Game Hub
+
+    <div id="fullscreenHint">
+        Press F for Fullscreen / Exit Fullscreen
+    </div>
+
     <div id="status">Scanning repo...</div>
 </div>
 
@@ -65,10 +86,10 @@ iframe {
 <script>
 let owner, repo;
 
-// 🔥 Detect GitHub Pages repo automatically
+// Detect GitHub Pages repo automatically
 (function detectRepo(){
     const parts = window.location.hostname.split(".");
-    owner = parts[0]; // username.github.io
+    owner = parts[0];
 
     const pathParts = window.location.pathname.split("/").filter(Boolean);
     repo = pathParts[0] || owner + ".github.io";
@@ -90,21 +111,25 @@ async function scanRepo(){
         const data = await res.json();
 
         if(!Array.isArray(data)){
-            status.innerText = "❌ Cannot scan repo (private or error)";
+            status.innerText = "❌ Cannot scan repo";
             return;
         }
 
+        // Detect BOTH .html and .js files
         const games = data.filter(file =>
-            file.name.endsWith(".html") &&
+            (
+                file.name.endsWith(".html") ||
+                file.name.endsWith(".js")
+            ) &&
             file.name !== "index.html"
         );
 
         if(games.length === 0){
-            status.innerText = "No HTML games found";
+            status.innerText = "No games found";
             return;
         }
 
-        status.innerText = `Found ${games.length} games`;
+        status.innerText = `Found ${games.length} files`;
 
         renderGames(games);
 
@@ -126,13 +151,48 @@ function renderGames(files){
         div.innerText = file.name;
 
         div.onclick = () => {
+
+            // If HTML file → open directly
+            if(file.name.endsWith(".html")){
+                frame.src = file.path;
+            }
+
+            // If JS file → create temporary HTML wrapper
+            if(file.name.endsWith(".js")){
+                const wrapper = `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;background:black;overflow:hidden;">
+<script src="${file.path}"><\/script>
+</body>
+</html>
+                `;
+
+                const blob = new Blob([wrapper], {type:"text/html"});
+                frame.src = URL.createObjectURL(blob);
+            }
+
             frame.style.display = "block";
-            frame.src = file.path;
         };
 
         container.appendChild(div);
     });
 }
+
+// Fullscreen toggle with F key
+document.addEventListener("keydown", (e) => {
+
+    if(e.key.toLowerCase() === "f"){
+
+        if(!document.fullscreenElement){
+            document.documentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+
+    }
+
+});
 </script>
 
 </body>
